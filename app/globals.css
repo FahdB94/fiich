@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles */
+body {
+  @apply bg-neutral-light text-neutral-dark font-sans;
+}
+
+a {
+  @apply text-primary-light underline hover:text-primary;
+}

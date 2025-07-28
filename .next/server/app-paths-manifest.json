@@ -1,0 +1,6 @@
+{
+  "/company/[id]/invite/page": "app/company/[id]/invite/page.js",
+  "/company/[id]/page": "app/company/[id]/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/company/[id]/view/page": "app/company/[id]/view/page.js"
+}
