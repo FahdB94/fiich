@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Company } from '@/types';
+import FilePreview from './FilePreview';
 import { useRouter } from 'next/navigation';
 
 interface CompanyFormProps {
@@ -33,9 +34,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
   const [uploadingRib, setUploadingRib] = useState(false);
   const [uploadingCgv, setUploadingCgv] = useState(false);
   // Option allowing the user to store the uploaded documents with the company
-  const [includeDocs, setIncludeDocs] = useState(
-    Boolean(company?.kbis_url || company?.rib_url || company?.cgv_url)
-  );
+  const [includeDocs, setIncludeDocs] = useState(true);
 
   // Handle uploading of files to Supabase Storage. `field` corresponds to the
   // property name on the company (kbis_url, rib_url, cgv_url).
@@ -374,13 +373,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingKbis && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.kbis_url && (
-            <p className="text-xs mt-1">
-              <a href={values.kbis_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                KBIS téléversé
-              </a>
-            </p>
-          )}
+          {values.kbis_url && <FilePreview url={values.kbis_url} />}
         </div>
         {/* RIB */}
         <div>
@@ -395,13 +388,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingRib && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.rib_url && (
-            <p className="text-xs mt-1">
-              <a href={values.rib_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                RIB téléversé
-              </a>
-            </p>
-          )}
+          {values.rib_url && <FilePreview url={values.rib_url} />}
         </div>
         {/* CGV */}
         <div>
@@ -416,13 +403,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingCgv && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.cgv_url && (
-            <p className="text-xs mt-1">
-              <a href={values.cgv_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                CGV téléversées
-              </a>
-            </p>
-          )}
+          {values.cgv_url && <FilePreview url={values.cgv_url} />}
         </div>
       </div>
       )}
