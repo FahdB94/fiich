@@ -32,6 +32,10 @@ export default function CompanyForm({ company }: CompanyFormProps) {
   const [uploadingKbis, setUploadingKbis] = useState(false);
   const [uploadingRib, setUploadingRib] = useState(false);
   const [uploadingCgv, setUploadingCgv] = useState(false);
+  // Option allowing the user to store the uploaded documents with the company
+  const [includeDocs, setIncludeDocs] = useState(
+    Boolean(company?.kbis_url || company?.rib_url || company?.cgv_url)
+  );
 
   // Handle uploading of files to Supabase Storage. `field` corresponds to the
   // property name on the company (kbis_url, rib_url, cgv_url).
@@ -120,11 +124,18 @@ export default function CompanyForm({ company }: CompanyFormProps) {
     setLoading(true);
     setError(null);
     try {
+      // Prepare payload and optionally strip document URLs
+      const payload = { ...values } as any;
+      if (!includeDocs) {
+        payload.kbis_url = null;
+        payload.rib_url = null;
+        payload.cgv_url = null;
+      }
       if (company) {
         // Update existing company
         const { error } = await supabase
           .from('companies')
-          .update({ ...values, updated_at: new Date().toISOString() })
+          .update({ ...payload, updated_at: new Date().toISOString() })
           .eq('id', company.id);
         if (error) throw error;
       } else {
@@ -140,7 +151,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
           throw new Error("Vous devez être connecté pour créer une fiche.");
         }
         const { error } = await supabase.from('companies').insert({
-          ...values,
+          ...payload,
           user_id: user.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -334,7 +345,21 @@ export default function CompanyForm({ company }: CompanyFormProps) {
           className="mt-1 block w-full px-3 py-2 border border-neutral-dark/20 rounded-md shadow-sm focus:outline-none focus:ring-primary-light focus:border-primary"
         ></textarea>
       </div>
+      {/* Toggle documents */}
+      <div className="flex items-center">
+        <input
+          id="includeDocs"
+          type="checkbox"
+          className="mr-2"
+          checked={includeDocs}
+          onChange={(e) => setIncludeDocs(e.target.checked)}
+        />
+        <label htmlFor="includeDocs" className="text-sm font-medium text-neutral-dark">
+          Joindre des documents (KBIS, RIB, CGV)
+        </label>
+      </div>
       {/* Fichiers justificatifs: KBIS, RIB, CGV */}
+      {includeDocs && (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* KBIS */}
         <div>
@@ -400,6 +425,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
           )}
         </div>
       </div>
+      )}
       <button
         type="submit"
         disabled={loading}
