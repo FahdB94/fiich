@@ -37,3 +37,12 @@ export interface Share {
   accepted: boolean;
   created_at: string;
 }
+
+export interface Document {
+  id: string;
+  company_id: string;
+  name: string;
+  type: string;
+  url: string;
+  created_at: string;
+}

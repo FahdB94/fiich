@@ -2,14 +2,16 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
+import FilePreview from '@/components/FilePreview';
 import { supabase } from '@/lib/supabaseClient';
-import { Company } from '@/types';
+import { Company, Document } from '@/types';
 
 export default function ReceivedDetailPage() {
   const params = useParams();
   const shareId = params?.id as string;
   const [company, setCompany] = useState<Company | null>(null);
   const [fields, setFields] = useState<string[] | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +28,11 @@ export default function ReceivedDetailPage() {
       } else if (data) {
         setFields(data.shared_fields as any);
         setCompany(data.company as Company);
+        const { data: docs } = await supabase
+          .from('documents')
+          .select('*')
+          .eq('company_id', data.company.id);
+        setDocuments(docs as Document[] || []);
       }
       setLoading(false);
     };
@@ -80,39 +87,17 @@ export default function ReceivedDetailPage() {
             )}
             {/* Documents */}
             {isFieldVisible('kbis_url') && company.kbis_url && (
-              <div>
-                <strong>KBIS :</strong>
-                <div className="mt-1">
-                  <a href={company.kbis_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                    Télécharger le KBIS
-                  </a>
-                  {/* PDF preview */}
-                  <iframe src={company.kbis_url} className="w-full h-64 mt-2" />
-                </div>
-              </div>
+              <FilePreview url={company.kbis_url} label="KBIS" />
             )}
             {isFieldVisible('rib_url') && company.rib_url && (
-              <div>
-                <strong>RIB :</strong>
-                <div className="mt-1">
-                  <a href={company.rib_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                    Télécharger le RIB
-                  </a>
-                  <iframe src={company.rib_url} className="w-full h-64 mt-2" />
-                </div>
-              </div>
+              <FilePreview url={company.rib_url} label="RIB" />
             )}
             {isFieldVisible('cgv_url') && company.cgv_url && (
-              <div>
-                <strong>CGV :</strong>
-                <div className="mt-1">
-                  <a href={company.cgv_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                    Télécharger les CGV
-                  </a>
-                  <iframe src={company.cgv_url} className="w-full h-64 mt-2" />
-                </div>
-              </div>
+              <FilePreview url={company.cgv_url} label="CGV" />
             )}
+            {documents.map((doc) => (
+              <FilePreview key={doc.id} url={doc.url} label={doc.name} />
+            ))}
           </div>
         )}
       </main>
