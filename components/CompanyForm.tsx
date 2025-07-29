@@ -1,7 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Company } from '@/types';
+import { Company, Document } from '@/types';
+import FilePreview from './FilePreview';
 import { useRouter } from 'next/navigation';
 
 interface CompanyFormProps {
@@ -33,9 +34,24 @@ export default function CompanyForm({ company }: CompanyFormProps) {
   const [uploadingRib, setUploadingRib] = useState(false);
   const [uploadingCgv, setUploadingCgv] = useState(false);
   // Option allowing the user to store the uploaded documents with the company
-  const [includeDocs, setIncludeDocs] = useState(
-    Boolean(company?.kbis_url || company?.rib_url || company?.cgv_url)
-  );
+const [includeDocs, setIncludeDocs] = useState(true);
+
+  const saveDocuments = async (companyId: string) => {
+    const docs = [
+      { url: values.kbis_url, type: 'kbis', name: 'KBIS' },
+      { url: values.rib_url, type: 'rib', name: 'RIB' },
+      { url: values.cgv_url, type: 'cgv', name: 'CGV' },
+    ].filter((d) => d.url);
+    for (const doc of docs) {
+      const { error } = await supabase
+        .from('documents')
+        .upsert(
+          { company_id: companyId, name: doc.name, type: doc.type, url: doc.url },
+          { onConflict: 'company_id,type' }
+        );
+      if (error) throw error;
+    }
+  };
 
   // Handle uploading of files to Supabase Storage. `field` corresponds to the
   // property name on the company (kbis_url, rib_url, cgv_url).
@@ -138,6 +154,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
           .update({ ...payload, updated_at: new Date().toISOString() })
           .eq('id', company.id);
         if (error) throw error;
+        if (includeDocs) await saveDocuments(company.id);
       } else {
         // Insert new company
         const {
@@ -150,13 +167,18 @@ export default function CompanyForm({ company }: CompanyFormProps) {
         if (!user) {
           throw new Error("Vous devez être connecté pour créer une fiche.");
         }
-        const { error } = await supabase.from('companies').insert({
-          ...payload,
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        const { data: inserted, error } = await supabase
+          .from('companies')
+          .insert({
+            ...payload,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
         if (error) throw error;
+        if (includeDocs && inserted) await saveDocuments(inserted.id);
       }
       // Après création ou mise à jour, redirige vers le tableau de bord et force un rafraîchissement.
       router.replace('/dashboard');
@@ -374,13 +396,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingKbis && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.kbis_url && (
-            <p className="text-xs mt-1">
-              <a href={values.kbis_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                KBIS téléversé
-              </a>
-            </p>
-          )}
+          {values.kbis_url && <FilePreview url={values.kbis_url} />}
         </div>
         {/* RIB */}
         <div>
@@ -395,13 +411,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingRib && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.rib_url && (
-            <p className="text-xs mt-1">
-              <a href={values.rib_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                RIB téléversé
-              </a>
-            </p>
-          )}
+          {values.rib_url && <FilePreview url={values.rib_url} />}
         </div>
         {/* CGV */}
         <div>
@@ -416,13 +426,7 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             className="mt-1 block w-full text-sm"
           />
           {uploadingCgv && <p className="text-xs text-neutral-dark">Téléversement en cours…</p>}
-          {values.cgv_url && (
-            <p className="text-xs mt-1">
-              <a href={values.cgv_url} target="_blank" rel="noopener noreferrer" className="text-primary-light underline">
-                CGV téléversées
-              </a>
-            </p>
-          )}
+          {values.cgv_url && <FilePreview url={values.cgv_url} />}
         </div>
       </div>
       )}
