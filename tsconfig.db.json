@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist-db-test",
+    "types": ["node"]
+  },
+  "include": [
+    "scripts/db-test.ts"
+  ]
+}
