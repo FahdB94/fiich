@@ -65,8 +65,8 @@ export default function ReceivedPage() {
             {shares
               .filter((share) => {
                 const term = searchTerm.toLowerCase();
-                return !term ||
-                  share.company?.name.toLowerCase().includes(term);
+                const name = share.company?.name ?? '';
+                return !term || name.toLowerCase().includes(term);
               })
               .map((share) => (
                 <li key={share.id} className="border border-neutral-dark/10 p-4 rounded-md">
