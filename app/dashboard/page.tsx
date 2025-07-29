@@ -10,6 +10,16 @@ export default function DashboardPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Supprimer cette fiche ?')) return;
+    const { error } = await supabase.from('companies').delete().eq('id', id);
+    if (!error) {
+      setCompanies((prev) => prev.filter((c) => c.id !== id));
+    } else {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const fetchCompanies = async () => {
       setLoading(true);
@@ -86,6 +96,12 @@ export default function DashboardPage() {
                     >
                       Inviter
                     </Link>
+                    <button
+                      onClick={() => handleDelete(company.id)}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Supprimer
+                    </button>
                   </div>
                 </div>
               </li>
