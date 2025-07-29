@@ -102,3 +102,43 @@ create index if not exists idx_companies_user on public.companies (user_id);
 create index if not exists idx_shares_recipient on public.shares (recipient_user_id);
 create index if not exists idx_invites_invitee_user on public.invites (invitee_user_id);
 create index if not exists idx_invites_invitee_email on public.invites (invitee_email);
+
+-- Table storing documents uploaded by companies
+create table if not exists public.documents (
+  id uuid default uuid_generate_v4() primary key,
+  company_id uuid references public.companies (id) on delete cascade,
+  name text not null,
+  type text not null,
+  url text not null,
+  created_at timestamp with time zone default now()
+);
+
+-- Index for quick lookups by company
+create index if not exists idx_documents_company on public.documents (company_id);
+
+alter table public.documents enable row level security;
+
+drop policy if exists "documents_select_company" on public.documents;
+create policy "documents_select_company" on public.documents
+  for select
+  using (
+    -- Owner of the company
+    exists (
+      select 1 from public.companies
+      where id = company_id and user_id = auth.uid()
+    )
+    -- Or recipient of an accepted share
+    or exists (
+      select 1 from public.shares
+      where company_id = documents.company_id
+        and recipient_user_id = auth.uid()
+        and accepted
+    )
+  );
+
+drop policy if exists "documents_insert_company" on public.documents;
+create policy "documents_insert_company" on public.documents
+  for insert
+  with check (
+    exists (select 1 from public.companies where id = company_id and user_id = auth.uid())
+  );
